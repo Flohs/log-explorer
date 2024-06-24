@@ -24,7 +24,7 @@ class UserRepository extends ServiceEntityRepository
 
     public function getAllUser(array $options)
     {
-        $limit = $options['limit'] ?? 10;
+        $limit = false;
         $page = $options['page'] ?? 1;
         $keyword = $options['kw'] ?? false;
         $builder = $this->createQueryBuilder('u');
@@ -34,11 +34,12 @@ class UserRepository extends ServiceEntityRepository
                 $builder->expr()->like('CONCAT(u.firstName, u.lastName)', ':kw')
             ))->setParameter('kw', "%{$keyword}%");
         }
-        if ($limit) {
-            $builder->setMaxResults($limit);
+        if (is_numeric($options['limit']) && $options['limit'] > 0) {
+            $builder->setMaxResults($options['limit']);
+            $limit = true;
         }
         if ($limit && $page) {
-            $builder->setFirstResult(($page - 1) * $limit);
+            $builder->setFirstResult(($page - 1) * $options['limit']);
         }
         return $builder->getQuery()->getResult();
     }
